@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Fault Detector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, #000428, #004e92);
+            min-height: 100vh;
+        }
+        .neon-border {
+            box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+        }
+        .upload-area {
+            border: 2px dashed #00f2fe;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #00f2fe;
+            box-shadow: 0 0 15px #00f2fe;
+        }
+        .cyberpunk-button {
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            transition: all 0.3s ease;
+        }
+        .cyberpunk-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="text-white p-4">
+    <div class="container mx-auto max-w-4xl">
+        <h1 class="text-4xl md:text-6xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">
+            ENGINE FAULT DETECTOR
+        </h1>
+
+        <!-- Model Selection -->
+        <div class="mb-8 neon-border rounded-lg p-6 bg-black/30 backdrop-blur-sm">
+            <h2 class="text-2xl mb-4 text-cyan-400">Select Neural Network Model</h2>
+            <select id="modelSelect" class="w-full bg-black/50 border-2 border-cyan-400 rounded-lg p-3 text-cyan-400">
+                <option value="model1">Convolutional Neural Network</option>
+                <option value="model2">Recurrent Neural Network</option>
+                <option value="model3">Transformer Model</option>
+            </select>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- File Upload -->
+            <div class="upload-area rounded-lg p-6 bg-black/30 backdrop-blur-sm">
+                <h2 class="text-xl mb-4 text-pink-400">Upload Audio File</h2>
+                <div class="text-center">
+                    <label class="cursor-pointer">
+                        <input type="file" accept="audio/*" class="hidden" id="fileUpload" />
+                        <div class="cyberpunk-button py-4 px-6 rounded-lg text-black font-bold">
+                            <i class="bi bi-upload mr-2"></i>Choose File
+                        </div>
+                    </label>
+                    <p id="fileName" class="mt-4 text-cyan-400"></p>
+                </div>
+            </div>
+
+            <!-- Microphone Input -->
+            <div class="upload-area rounded-lg p-6 bg-black/30 backdrop-blur-sm">
+                <h2 class="text-xl mb-4 text-pink-400">Record Audio</h2>
+                <div class="text-center">
+                    <button id="recordButton" class="cyberpunk-button py-4 px-6 rounded-lg text-black font-bold">
+                        <i class="bi bi-mic-fill mr-2"></i>Start Recording
+                    </button>
+                    <p id="recordingStatus" class="mt-4 text-cyan-400"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="mt-8 neon-border rounded-lg p-6 bg-black/30 backdrop-blur-sm hidden" id="resultsSection">
+            <h2 class="text-2xl mb-4 text-cyan-400">Analysis Results</h2>
+            <div id="results" class="text-lg text-white"></div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        document.getElementById('fileUpload').addEventListener('change', (e) => {
+            const fileName = e.target.files[0]?.name;
+            document.getElementById('fileName').textContent = fileName || 'No file selected';
+            if(fileName) {
+                simulateAnalysis();
+            }
+        });
+
+        document.getElementById('recordButton').addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        simulateAnalysis();
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('recordButton').innerHTML = '<i class="bi bi-stop-fill mr-2"></i>Stop Recording';
+                    document.getElementById('recordingStatus').textContent = 'Recording...';
+                } catch (err) {
+                    alert('Error accessing microphone: ' + err.message);
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('recordButton').innerHTML = '<i class="bi bi-mic-fill mr-2"></i>Start Recording';
+                document.getElementById('recordingStatus').textContent = 'Recording stopped';
+            }
+        });
+
+        function simulateAnalysis() {
+            const resultsSection = document.getElementById('resultsSection');
+            const results = document.getElementById('results');
+            
+            resultsSection.classList.remove('hidden');
+            results.innerHTML = '<div class="animate-pulse">Analyzing engine sound...</div>';
+            
+            setTimeout(() => {
+                const randomFault = Math.random() > 0.5 ? 
+                    'No engine fault detected. Everything seems to be running smoothly.' :
+                    'Warning: Potential engine fault detected. Abnormal frequency patterns identified in cylinder 3.';
+                
+                results.innerHTML = `
+                    <div class="p-4 ${randomFault.includes('Warning') ? 'bg-red-500/20' : 'bg-green-500/20'} rounded-lg">
+                        <p class="font-bold ${randomFault.includes('Warning') ? 'text-red-400' : 'text-green-400'}">${randomFault}</p>
+                    </div>
+                `;
+            }, 2000);
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
